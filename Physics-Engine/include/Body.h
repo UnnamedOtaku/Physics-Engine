@@ -17,6 +17,7 @@ private:
 
 public:
     Model Mesh; // Mesh model of the body
+    Color color;
     bool IsStatic; // Indicates if the body is static
     float Radius; // Radius of the body (for spherical shapes)
     Vector3 Size; // Size of the body (for box shapes)
@@ -41,7 +42,8 @@ private:
         Vector3 size,
         float radius,
         bool isStatic,
-        ShapeType shapeType
+        ShapeType shapeType,
+        Color color
     );
 
 public:
@@ -50,7 +52,7 @@ public:
     // Method to move the body to a specific position
     void MoveTo(Vector3 position);
     // Static method to create a spherical body
-    static bool CreateSphereBody(Vector3 position, float radius, bool isStatic, Body** body, const char** error);
+    static bool CreateSphereBody(Vector3 position, float radius, bool isStatic, Color color, Body** body, const char** error);
     // Static method to create a box-shaped body
-    static bool CreateBoxBody(Vector3 position, Vector3 size, bool isStatic, Body** body, const char** error);
+    static bool CreateBoxBody(Vector3 position, Vector3 size, bool isStatic, Color color, Body** body, const char** error);
 };
