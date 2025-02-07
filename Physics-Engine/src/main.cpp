@@ -1,51 +1,53 @@
 // External Includes
 #include <raylib.h>
 #include <raymath.h>
-#include <malloc.h>
+#include <vector>
 
 // Local Includes
-#include "Body.h"
+//#include "Body.h"
+#include "World.h"
 
 int main()
 {
     const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenHeight = 600;
     InitWindow(screenWidth, screenHeight, "Physics Engine");
 
     // Initialize the camera
     Camera camera = { 0 };
-    camera.position = { 0.0f, 0.0f, 50.0f };
+    camera.position = { 0.0f, 0.0f, -1.0f };
     camera.target = { 0.0f, 0.0f, 0.0f };
     camera.up = { 0.0f, 1.0f, 0.0f };
     camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    const int bodyCount = 1000;
-    Body* bodyList = (Body*)malloc(bodyCount * sizeof(Body));
-    if (bodyList == NULL)
-    {
-        TraceLog(LOG_ERROR, "Failed to allocate memory for bodyList.");
-        return -1;
-    }
+    const int bodyCount = 300;
 
-    Body* body;
+    World world;
+    //Body body;
     const char* error;
     Vector3 pos;
     float rad;
     unsigned char R, G, B;
 
-    for (int i = 0; i < bodyCount; i++)
+    for (int i = 0; i < bodyCount - 1; i++)
     {
-        pos = { (float)GetRandomValue(-25, 25), (float)GetRandomValue(-25, 25), (float)GetRandomValue(-25, 25) };
+        Body body;
         rad = (float)GetRandomValue(1, 5);
+        pos = { (float)GetRandomValue(-50, 50), (float)GetRandomValue(rad + 50, 100), (float)GetRandomValue(-50, 50) };
         R = GetRandomValue(0, 255);
         G = GetRandomValue(0, 255);
         B = GetRandomValue(0, 255);
-        if (!Body::CreateSphereBody(pos, rad, true, { R, G, B, 255 }, &body, &error))
+        if (!Body::CreateSphereBody(pos, rad, 15.0f, false, 0.5f, { R, G, B, 255 }, &body, &error))
             TraceLog(LOG_ERROR, error);
 
-        bodyList[i] = *body;
+        world.AddBody(body);
     }
+
+    Body body;
+    if (!Body::CreateSphereBody({ 0, -102, 0 }, 100, 60.0f, true, 0.5f, { R, G, B, 255 }, &body, &error))
+        TraceLog(LOG_ERROR, error);
+    world.AddBody(body);
 
     bool showCursor = false;
     DisableCursor();
@@ -71,16 +73,28 @@ int main()
 
         // Update camera
         UpdateCamera(&camera, CAMERA_FREE);
+        Vector3 dir = Vector3Normalize(Vector3Subtract(camera.position, camera.target));
+
+        world.Step(GetFrameTime(), 10);
+
+        for (int i = 0; i < world.BodyCount(); i++)
+            if (Vector3Distance(camera.position, world.GetBody(i)->Position()) > 1000)
+            world.RemoveBody(i);
 
         // Draw everything
         BeginDrawing();
         ClearBackground(BLACK);
         BeginMode3D(camera);
-        for (int i = 0; i < bodyCount; i++)
+        for (int i = 0; i < world.BodyCount(); i++)
         {
-            Body* body = &bodyList[i];
+            Body *body = world.GetBody(i);
+            if (body == nullptr) continue;
+
             if (body->shapeType == Sphere)
+            {
+                if (Vector3DotProduct(dir, Vector3Normalize(Vector3Subtract(camera.position, body->Position()))) < -0.2) continue;
                 DrawModel(body->Mesh, body->Position(), body->Radius, body->color);
+            }
             else if (body->shapeType == Box)
                 DrawModel(body->Mesh, body->Position(), Vector3Length(body->Size), body->color);
         }
@@ -90,8 +104,9 @@ int main()
     }
 
     // Close window and OpenGL context
-    free(bodyList);
     CloseWindow();
+    for (int i = 0; i < world.BodyCount(); i++)
+        world.RemoveBody(i);
 
     return 0;
 }
