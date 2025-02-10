@@ -34,6 +34,7 @@ Body *World::GetBody(int index) {
 
 void World::Step(float time, int iterations)
 {
+    Vector3 dir;
     iterations = Clamp(iterations, World::MinIterations, World::MaxIterations);
 
     for (int it = 0; it < iterations; it++)
@@ -41,7 +42,8 @@ void World::Step(float time, int iterations)
         // Movement step
         for (int i = 0; i < this->bodyCount; i++)
         {
-            this->bodyList[i].Step(time, this->gravity, iterations);
+            dir = Vector3Normalize(Vector3Subtract(this->bodyList[bodyCount - 1].Position(), this->bodyList[i].Position()));
+            this->bodyList[i].Step(time, Vector3Scale(dir, Vector3Length(gravity)), iterations);
         }
 
         this->contactList.clear();

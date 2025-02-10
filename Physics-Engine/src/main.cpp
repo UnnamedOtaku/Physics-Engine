@@ -21,7 +21,7 @@ int main()
     camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    const int bodyCount = 300;
+    const int bodyCount = 1000;
 
     World world;
     //Body body;
@@ -45,7 +45,7 @@ int main()
     }
 
     Body body;
-    if (!Body::CreateSphereBody({ 0, -102, 0 }, 100, 60.0f, true, 0.5f, { R, G, B, 255 }, &body, &error))
+    if (!Body::CreateSphereBody({ 0, -102, 0 }, 100, 60.0f, true, 0.5f, GREEN, &body, &error))
         TraceLog(LOG_ERROR, error);
     world.AddBody(body);
 
@@ -75,10 +75,10 @@ int main()
         UpdateCamera(&camera, CAMERA_FREE);
         Vector3 dir = Vector3Normalize(Vector3Subtract(camera.position, camera.target));
 
-        world.Step(GetFrameTime(), 10);
+        world.Step(GetFrameTime(), 2);
 
         for (int i = 0; i < world.BodyCount(); i++)
-            if (Vector3Distance(camera.position, world.GetBody(i)->Position()) > 1000)
+            if (Vector3Distance(camera.position, world.GetBody(i)->Position()) > 2500)
             world.RemoveBody(i);
 
         // Draw everything

@@ -34,3 +34,6 @@
 /Physics-Engine/x64/Release
 /x64/Debug
 /Release
+/Physics-Engine/Release
+/Physics-Engine/x64/Debug
+/.vs/Physics-Engine
