@@ -3,6 +3,8 @@
 #include <raymath.h>
 #include <vector>
 
+#include "AABB.h"
+
 class World;
 
 // Enumeration for the type of shape
@@ -24,7 +26,9 @@ private:
     std::vector<Vector3> vertices;
     std::vector<int> Triangles;
     std::vector<Vector3> transformedVertices;
+    AABB aabb;
     bool transformUpdateRequired = true;
+    bool aabbUpdateRequired = true;
 
 public:
     Model Mesh; // Mesh model of the body
@@ -90,13 +94,16 @@ private:
     static std::vector<int> CreateBoxTriangles();
 
 public:
-    Body() {}
+    Body() = default;
+    ~Body();
     std::vector<Vector3> GetTransformedVertices();
-    void Step(float time, Vector3 gravity, int iterations);
+    AABB GetAABB();
+    void Step(float time, int iterations);
     // Method to move the body by a specific amount
     void Move(Vector3 amount);
     // Method to move the body to a specific position
     void MoveTo(Vector3 position);
+    void AddForce(Vector3 amount);
     // Static method to create a spherical body
     static bool CreateSphereBody(Vector3 position, float radius, float density, bool isStatic, float restitution, Color color, Body* body, const char** error);
     // Static method to create a box-shaped body

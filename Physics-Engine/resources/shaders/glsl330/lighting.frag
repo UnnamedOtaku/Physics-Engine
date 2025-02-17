@@ -60,7 +60,7 @@ void main()
 			}
 
 			float distance = length(lights[i].position - fragPosition); 
-			float attenuation = 50.0 / (distance * distance); // Quadratic attenuation
+			float attenuation = 1e4 / (distance * distance); // Quadratic attenuation
 
 			float NdotL = max(dot(normal, light), 0.0);
 			lightDot += lights[i].color.rgb*NdotL * attenuation; 

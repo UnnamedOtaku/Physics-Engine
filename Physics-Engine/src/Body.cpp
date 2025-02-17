@@ -1,12 +1,19 @@
 #include "Body.h"
 #include "World.h"
 
-//#include
-
 // Constructor for the Body class
-Body::Body(Vector3 position, Vector3 size, float radius, float density, float mass, float restitution, float volume,
-    bool isStatic, ShapeType shapeType, Color color)
-{
+Body::Body(
+    Vector3 position,
+    Vector3 size,
+    float radius,
+    float density,
+    float mass,
+    float restitution,
+    float volume,
+    bool isStatic,
+    ShapeType shapeType,
+    Color color
+) {
     this->_Position = position;
     this->_LinearVelocity = Vector3Zero();
     //this->rotation = 0.0f;
@@ -42,6 +49,11 @@ Body::Body(Vector3 position, Vector3 size, float radius, float density, float ma
     }
 
     this->transformUpdateRequired = true;
+    this->aabbUpdateRequired = true;
+}
+
+Body::~Body() {
+    //printf("deleting\n");
 }
 
 std::vector<Vector3> Body::CreateBoxVertices(Vector3 size)
@@ -110,7 +122,55 @@ std::vector<Vector3> Body::GetTransformedVertices()
     return this->transformedVertices;
 }
 
-void Body::Step(float time, Vector3 gravity, int iterations)
+AABB Body::GetAABB()
+{
+    if (this->aabbUpdateRequired)
+    {
+        float minX = 1e10;
+        float minY = 1e10;
+        float minZ = 1e10;
+        float maxX = -1e10;
+        float maxY = -1e10;
+        float maxZ = -1e10;
+
+        if (this->shapeType == Box)
+        {
+            std::vector<Vector3> vertices = this->GetTransformedVertices();
+
+            for (int i = 0; i < vertices.size(); i++)
+            {
+                Vector3 v = vertices[i];
+
+                if (v.x < minX) { minX = v.x; }
+                if (v.x > maxX) { maxX = v.x; }
+                if (v.y < minY) { minY = v.y; }
+                if (v.y > maxY) { maxY = v.y; }
+                if (v.z < minZ) { minZ = v.z; }
+                if (v.z > maxZ) { maxZ = v.z; }
+            }
+        }
+        else if (this->shapeType == Sphere)
+        {
+            minX = this->_Position.x - this->Radius;
+            minY = this->_Position.y - this->Radius;
+            minZ = this->_Position.z - this->Radius;
+            maxX = this->_Position.x + this->Radius;
+            maxY = this->_Position.y + this->Radius;
+            maxZ = this->_Position.z + this->Radius;
+        }
+        else
+        {
+            TraceLog(LOG_ERROR, "Unknown ShapeType.");
+        }
+
+        this->aabb = AABB(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    this->aabbUpdateRequired = false;
+    return this->aabb;
+}
+
+void Body::Step(float time, int iterations)
 {
     if (this->IsStatic)
     {
@@ -122,7 +182,8 @@ void Body::Step(float time, Vector3 gravity, int iterations)
     // force = mass * acc
     // acc = force / mass;
 
-    Vector3 acceleration = Vector3Add(gravity, Vector3Scale(this->force, 1 / this->Mass));
+    Vector3 acceleration = Vector3Scale(this->force, 1 / this->Mass);
+    //Vector3 acceleration = this->force;
     this->_LinearVelocity = Vector3Add(this->_LinearVelocity, Vector3Scale(acceleration, time));
 
     this->_Position = Vector3Add(this->_Position, Vector3Scale(this->_LinearVelocity, time));
@@ -130,21 +191,29 @@ void Body::Step(float time, Vector3 gravity, int iterations)
     //this->_Rotation = Vector3Add(this->_Rotation, Vector3Scale(this->_RotationalVelocity, time));
 
     this->force = Vector3Zero();
-    transformUpdateRequired = true;
+    this->transformUpdateRequired = true;
+    this->aabbUpdateRequired = true;
 }
 
 // Method to move the body by a specific amount
 void Body::Move(Vector3 amount)
 {
     this->_Position = Vector3Add(this->_Position, amount); // Update the position of the body
-    transformUpdateRequired = true;
+    this->transformUpdateRequired = true;
+    this->aabbUpdateRequired = true;
 }
 
 // Method to move the body to a specific position
 void Body::MoveTo(Vector3 pos)
 {
     this->_Position = pos; // Set the new position of the body
-    transformUpdateRequired = true;
+    this->transformUpdateRequired = true;
+    this->aabbUpdateRequired = true;
+}
+
+void Body::AddForce(Vector3 amount)
+{
+    this->force = Vector3Add(this->force, amount);
 }
 
 // Static method to create a spherical body

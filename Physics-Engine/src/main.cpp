@@ -4,12 +4,10 @@
 #include <vector>
 
 // Local Includes
-//#include "Body.h"
 #include "World.h"
 #define RLIGHTS_IMPLEMENTATION
 #include "RLights.h"
 
-#define PLATFORM_DESKTOP
 #if defined(PLATFORM_DESKTOP)
 #define GLSL_VERSION            330
 #else   // PLATFORM_ANDROID, PLATFORM_WEB
@@ -25,7 +23,7 @@ int main()
 
     // Initialize the camera
     Camera camera = { 0 };
-    camera.position = { 0.0f, 0.0f, -1.0f };
+    camera.position = { 0.0f, -102.0f, -400.0f };
     camera.target = { 0.0f, 0.0f, 0.0f };
     camera.up = { 0.0f, 1.0f, 0.0f };
     camera.fovy = 60.0f;
@@ -47,15 +45,15 @@ int main()
 
     // Create lights
     Light lights[MAX_LIGHTS] = { 0 };
-    lights[0] = CreateLight(LIGHT_POINT, { -2, 100, -2 }, Vector3Zero(), YELLOW, shader);
-    lights[1] = CreateLight(LIGHT_POINT, { -2, 100, -2 }, Vector3Zero(), RED, shader);
-    lights[2] = CreateLight(LIGHT_POINT, { -2, 100, -2 }, Vector3Zero(), GREEN, shader);
-    lights[3] = CreateLight(LIGHT_POINT, { -2, 100, -2 }, Vector3Zero(), BLUE, shader);
+    lights[0] = CreateLight(LIGHT_POINT, { -2, 300, -2 }, Vector3Zero(), YELLOW, shader);
+    lights[1] = CreateLight(LIGHT_POINT, { -2, 300, -2 }, Vector3Zero(), RED, shader);
+    lights[2] = CreateLight(LIGHT_POINT, { -2, 300, -2 }, Vector3Zero(), GREEN, shader);
+    lights[3] = CreateLight(LIGHT_POINT, { -2, 300, -2 }, Vector3Zero(), BLUE, shader);
 
     const int bodyCount = 1000;
 
     World world;
-    //Body body;
+    Body body;
     const char* error;
     Vector3 pos;
     float rad;
@@ -63,9 +61,9 @@ int main()
 
     for (int i = 0; i < bodyCount - 1; i++)
     {
-        Body body;
+        //Body body;
         rad = (float)GetRandomValue(1, 5);
-        pos = { (float)GetRandomValue(-50, 50), (float)GetRandomValue(rad + 50, 100), (float)GetRandomValue(-50, 50) };
+        pos = { (float)GetRandomValue(-1000, 1000), (float)GetRandomValue(-1000, 1000), (float)GetRandomValue(-1000, 1000) };
         R = GetRandomValue(0, 255);
         G = GetRandomValue(0, 255);
         B = GetRandomValue(0, 255);
@@ -76,8 +74,8 @@ int main()
         world.AddBody(body);
     }
 
-    Body body;
-    if (!Body::CreateSphereBody({ 0, -102, 0 }, 100, 60.0f, true, 0.5f, GREEN, &body, &error))
+    //Body body;
+    if (!Body::CreateSphereBody({ 0, -102, 0 }, 150.0f, 1e10f, false, 0.5f, GREEN, &body, &error))
         TraceLog(LOG_ERROR, error);
 
     body.Mesh.materials[0].shader = shader;
@@ -106,7 +104,8 @@ int main()
         }
 
         // Update camera
-        UpdateCamera(&camera, CAMERA_FREE);
+        camera.target = world.GetBody(world.BodyCount() - 1)->Position();
+        UpdateCamera(&camera, CAMERA_THIRD_PERSON);
         Vector3 dir = Vector3Normalize(Vector3Subtract(camera.position, camera.target));
 
         // Update the shader with the camera view vector (points towards { 0.0f, 0.0f, 0.0f })
@@ -125,7 +124,7 @@ int main()
         world.Step(GetFrameTime(), 2);
 
         for (int i = 0; i < world.BodyCount(); i++)
-            if (Vector3Distance(camera.position, world.GetBody(i)->Position()) > 2500)
+            if (Vector3Distance(camera.position, world.GetBody(i)->Position()) > 5000)
             world.RemoveBody(i);
 
         // Draw everything
